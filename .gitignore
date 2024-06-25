@@ -18,3 +18,8 @@ Thumbs.db
 # Ignore other temporary files
 *.log
 *.tmp
+
+env/
+*.pyc
+__pycache__/
+.DS_Store

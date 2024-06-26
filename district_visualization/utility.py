@@ -242,3 +242,35 @@ def update_plots(grid_size, districts, p_0, c, r, n):
 
     end_time = time.time()
     print(f"Update time: {end_time - start_time:.2f} seconds")
+
+
+
+def find_eg(win_count):
+    # Implementation of find_eg function (placeholder)
+    return {'eg': random.uniform(-0.1, 0.1)}
+
+def step_five_finder(delta, gamma, dists_num, p_0, n, c, r):
+    # Implementation of step_five_finder function
+    proportion_a = 5
+    proportion_b = (c*r) - proportion_a
+    left_side = proportion_b / proportion_a
+    F = math.sqrt((1-delta)/(2*dists_num))
+    numerator = (F**2)-(4*3.14*gamma**(-1)*F*math.sqrt(2)*(1/n))-(8*((3.14)**2)*(gamma**(-1))*(1/n)**2)
+    denominator = (F**2)+(4*3.14*gamma**(-1)*F*math.sqrt(2)*(1/n))+(8*((3.14)**2)*(gamma**(-1))*(1/n)**2)
+    right_side = numerator/denominator
+    return left_side, right_side
+
+def refined_step_five_finder(delta, gamma, dists_num, p_0, n, c, r):
+    # Implementation of refined_step_five_finder function
+    proportion_a = 5
+    proportion_b = (c*r) - proportion_a
+    left_side = proportion_b / proportion_a
+    F = math.sqrt((1-delta)/(2*dists_num))
+    numerator = 2*(1/n)*(math.pi)
+    denominator = (4*gamma)*(math.sqrt((1-delta)/(dists_num+1)))*n
+    right_side = numerator/denominator
+    return left_side, right_side
+
+def find_winners(win_count):
+    # Implementation of find_winners function (placeholder)
+    return random.randint(0, 10), random.randint(0, 10)

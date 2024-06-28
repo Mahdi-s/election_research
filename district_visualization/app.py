@@ -11,32 +11,28 @@ import math
 from ortools.graph import pywrapgraph
 from utility import setup, optimize, grid_setup, add_party_preference, create_district_map
 
-
-
-app = dash.Dash(__name__, suppress_callback_exceptions=True, external_stylesheets=[dbc.themes.BOOTSTRAP])
-server = app.server  
-
-
+app = dash.Dash(__name__, suppress_callback_exceptions=True, external_stylesheets=[dbc.themes.BOOTSTRAP, 'https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap'], title="District Visualization", update_title="Loading...", meta_tags=[{"name": "viewport", "content": "width=device-width, initial-scale=1"}])
+server = app.server
 
 # Define styles
-SLIDER_BOX_STYLE = {
-    'border': '2px solid #007BFF',
-    'border-radius': '10px',
-    'padding': '20px',
+CARD_STYLE = {
+    'box-shadow': '0 4px 6px 0 rgba(0, 0, 0, 0.1)',
+    'border-radius': '8px',
     'margin-bottom': '20px',
-    'background-color': '#f8f9fa'
+    'background-color': 'white',
 }
 
-LABEL_STYLE = {
-    'font-weight': 'bold',
-    'margin-bottom': '5px'
+SLIDER_STYLE = {
+    'margin-bottom': '20px',
 }
 
 GRAPH_STYLE = {
-    'border': '1px solid #ddd',
-    'border-radius': '5px',
-    'padding': '10px',
-    'margin-bottom': '20px'
+    'height': '100%',  # Changed to 100% to allow responsive height
+    'width': '100%',   # Added width: 100% for full width
+}
+
+FONT_STYLE = {
+    'font-family': 'Roboto, sans-serif',
 }
 
 def create_slider_with_tooltip(id, label, min_value, max_value, step, value, tooltip):
@@ -47,49 +43,73 @@ def create_slider_with_tooltip(id, label, min_value, max_value, step, value, too
         marks = {round(min_value + i * (max_value - min_value) / (num_marks - 1), 2): str(round(min_value + i * (max_value - min_value) / (num_marks - 1), 2)) for i in range(num_marks)}
     
     return html.Div([
-        html.Div([
-            html.Label(label, style=LABEL_STYLE),
-            html.Span("?", id=f"{id}-tooltip", style={'cursor': 'pointer', 'margin-left': '5px'}),
-        ]),
+        dbc.Label([label, dbc.Badge("?", color="info", className="ml-1", id=f"{id}-tooltip")]),
         dcc.Slider(
             id=id,
             min=min_value,
             max=max_value,
             step=step,
             value=value,
-            marks=marks
+            marks=marks,
+            className="mt-1"
         ),
         dbc.Tooltip(tooltip, target=f"{id}-tooltip"),
-    ], style={'margin-bottom': '10px'})
+    ], style=SLIDER_STYLE)
 
-app.layout = html.Div([
-    html.H1("District Visualization", style={'text-align': 'center', 'font-weight': 'bold'}),
+app.layout = dbc.Container([
+    html.H1("District Visualization", className="text-center my-4", style=FONT_STYLE),
     
-    html.Div([
-        create_slider_with_tooltip('grid-size-slider', "Grid Size", 5, 20, 1, 10, "The size of the grid for district visualization"),
-        create_slider_with_tooltip('districts-slider', "Districts", 2, 10, 1, 5, "The number of districts to create"),
-        create_slider_with_tooltip('p0-slider', "P0", 0.1, 0.9, 0.1, 0.5, "Probability parameter for district generation"),
-        create_slider_with_tooltip('c-slider', "C", 1, 10, 1, 3, "Parameter C for district generation"),
-        create_slider_with_tooltip('r-slider', "R", 1, 10, 1, 3, "Parameter R for district generation"),
-        create_slider_with_tooltip('n-slider', "N", 1, 10, 1, 5, "Parameter N for district generation"),
-    ], style=SLIDER_BOX_STYLE),
+    dbc.Card([
+        dbc.CardBody([
+            html.H4("About This Visualization", className="card-title", style=FONT_STYLE),
+            html.P(
+                "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam euismod, nisi vel consectetur "
+                "interdum, nisl nunc egestas nunc, vitae tincidunt nisl nunc euismod nunc. Sed euismod, nisi vel "
+                "consectetur interdum, nisl nunc egestas nunc, vitae tincidunt nisl nunc euismod nunc.",
+                style=FONT_STYLE
+            ),
+        ])
+    ], style=CARD_STYLE),
     
-    html.Div(id='warning-message', style={'color': 'red', 'margin-top': '10px', 'font-weight': 'bold'}),
-    
-    html.Div([
-        dcc.Graph(id='district-map', style=GRAPH_STYLE),
-    ]),
-    
-    html.Hr(style={'border-top': '2px solid #007BFF', 'margin': '30px 0'}),
-    
-    html.Div([
-        dcc.Graph(id='district-association-map', style=GRAPH_STYLE),
-    ]),
-    
-    html.Div(id='calculations-table'),
+    dbc.Row([
+        dbc.Col([
+            dbc.Card([
+                dbc.CardBody([
+                    html.H4("Control Panel", className="card-title", style=FONT_STYLE),
+                    create_slider_with_tooltip('grid-size-slider', "Grid Size", 5, 20, 1, 10, "The size of the grid for district visualization"),
+                    create_slider_with_tooltip('districts-slider', "Districts", 2, 10, 1, 5, "The number of districts to create"),
+                    create_slider_with_tooltip('p0-slider', "P0", 0.1, 0.9, 0.1, 0.5, "Probability parameter for district generation"),
+                    create_slider_with_tooltip('c-slider', "C", 1, 10, 1, 3, "Parameter C for district generation"),
+                    create_slider_with_tooltip('r-slider', "R", 1, 10, 1, 3, "Parameter R for district generation"),
+                    create_slider_with_tooltip('n-slider', "N", 1, 10, 1, 5, "Parameter N for district generation"),
+                ])
+            ], style=CARD_STYLE),
+            dbc.Card([
+                dbc.CardBody([
+                    html.H4("Calculations", className="card-title", style=FONT_STYLE),
+                    html.Div(id='calculations-table', style=FONT_STYLE),
+                ])
+            ], style=CARD_STYLE),
+        ], md=4),
+        dbc.Col([
+            dbc.Card([
+                dbc.CardBody([
+                    html.H4("District Map", className="card-title", style=FONT_STYLE),
+                    html.Div(id='warning-message', className="text-danger font-weight-bold", style=FONT_STYLE),
+                    dcc.Graph(id='district-map', style=GRAPH_STYLE),
+                ])
+            ], style=CARD_STYLE),
+            dbc.Card([
+                dbc.CardBody([
+                    html.H4("District Association Map", className="card-title", style=FONT_STYLE),
+                    dcc.Graph(id='district-association-map', style=GRAPH_STYLE),
+                ])
+            ], style=CARD_STYLE),
+        ], md=8),
+    ], className="mt-4"),
     
     dcc.Store(id='missed-nodes-store')
-])
+], fluid=True, style=FONT_STYLE)
 
 def find_eg(win_count):
     # Implementation of find_eg function (placeholder)
@@ -157,19 +177,23 @@ def update_graphs(grid_size, districts, p_0, c, r, n):
         ))
 
         fig1.update_layout(
-            title=dict(text=f'District Map (Blue: {party_counts["blue"]}, Red: {party_counts["red"]})', font=dict(size=18, weight='bold')),
-            xaxis_title=dict(text='X', font=dict(size=14, weight='bold')),
-            yaxis_title=dict(text='Y', font=dict(size=14, weight='bold')),
+            title=dict(text=f'District Map (Blue: {party_counts["blue"]}, Red: {party_counts["red"]})', font=dict(size=18)),
+            xaxis_title=dict(text='X', font=dict(size=14)),
+            yaxis_title=dict(text='Y', font=dict(size=14)),
             xaxis=dict(range=[-1, grid_size]), 
-            yaxis=dict(range=[-1, grid_size])
+            yaxis=dict(range=[-1, grid_size]),
+            height=500,
+            margin=dict(l=40, r=40, t=60, b=40),
         )
 
         fig2.update_layout(
-            title=dict(text='District Association Map', font=dict(size=18, weight='bold')),
-            xaxis_title=dict(text='X', font=dict(size=14, weight='bold')),
-            yaxis_title=dict(text='Y', font=dict(size=14, weight='bold')),
+            title=dict(text='District Association Map', font=dict(size=18)),
+            xaxis_title=dict(text='X', font=dict(size=14)),
+            yaxis_title=dict(text='Y', font=dict(size=14)),
             xaxis=dict(range=[-1, grid_size]), 
-            yaxis=dict(range=[-1, grid_size])
+            yaxis=dict(range=[-1, grid_size]),
+            height=500,
+            margin=dict(l=40, r=40, t=60, b=40),
         )
 
         # Calculate metrics
@@ -179,13 +203,17 @@ def update_graphs(grid_size, districts, p_0, c, r, n):
         winners = find_winners({'iteration1': [{'district1': {0.0: 100, 1.0: 80}}]})  # Placeholder input
 
         # Create calculations table
-        calculations_table = html.Table([
-            html.Tr([html.Th('Metric'), html.Th('Value')]),
-            html.Tr([html.Td('Efficiency Gap'), html.Td(f'{eg_result["eg"]:.4f}')]),
-            html.Tr([html.Td('Step Five (Left, Right)'), html.Td(f'{step_five[0]:.4f}, {step_five[1]:.4f}')]),
-            html.Tr([html.Td('Refined Step Five (Left, Right)'), html.Td(f'{refined_step_five[0]:.4f}, {refined_step_five[1]:.4f}')]),
-            html.Tr([html.Td('Winners (Party 1, Party 0)'), html.Td(f'{winners[0]}, {winners[1]}')]),
-        ], style={'border-collapse': 'collapse', 'width': '100%', 'margin-top': '20px'})
+        calculations_table = dbc.Table([
+            html.Thead([
+                html.Tr([html.Th('Metric'), html.Th('Value')])
+            ]),
+            html.Tbody([
+                html.Tr([html.Td('Efficiency Gap'), html.Td(f'{eg_result["eg"]:.4f}')]),
+                html.Tr([html.Td('Step Five (Left, Right)'), html.Td(f'{step_five[0]:.4f}, {step_five[1]:.4f}')]),
+                html.Tr([html.Td('Refined Step Five (Left, Right)'), html.Td(f'{refined_step_five[0]:.4f}, {refined_step_five[1]:.4f}')]),
+                html.Tr([html.Td('Winners (Party 1, Party 0)'), html.Td(f'{winners[0]}, {winners[1]}')]),
+            ])
+        ], bordered=True, hover=True, responsive=True, striped=True)
 
         return fig1, fig2, '', None, calculations_table
 
@@ -196,7 +224,7 @@ def update_graphs(grid_size, districts, p_0, c, r, n):
             
             empty_fig = go.Figure()
             empty_fig.update_layout(
-                title=dict(text='Error in Visualization', font=dict(size=18, weight='bold')),
+                title=dict(text='Error in Visualization', font=dict(size=18)),
                 annotations=[dict(
                     text=warning,
                     showarrow=False,
@@ -204,7 +232,9 @@ def update_graphs(grid_size, districts, p_0, c, r, n):
                     yref="paper",
                     x=0.5,
                     y=0.5
-                )]
+                )],
+                height=500,
+                margin=dict(l=40, r=40, t=60, b=40),
             )
             
             empty_fig.add_trace(go.Scatter(
@@ -226,7 +256,7 @@ def update_graphs(grid_size, districts, p_0, c, r, n):
         else:
             empty_fig = go.Figure()
             empty_fig.update_layout(
-                title=dict(text='Error in Visualization', font=dict(size=18, weight='bold')),
+                title=dict(text='Error in Visualization', font=dict(size=18)),
                 annotations=[dict(
                     text=f"An error occurred: {str(e)}",
                     showarrow=False,
@@ -234,9 +264,11 @@ def update_graphs(grid_size, districts, p_0, c, r, n):
                     yref="paper",
                     x=0.5,
                     y=0.5
-                )]
+                )],
+                height=500,
+                margin=dict(l=40, r=40, t=60, b=40),
             )
-            return empty_fig, empty_fig, f"An error occurred: {str(e)}", None, html.Div()
+            return empty_fig, empty_fig, f"The combination you selected is not valid. Please try again.", None, html.Div()
 
 if __name__ == '__main__':
     app.run_server(debug=True)

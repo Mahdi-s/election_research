@@ -8,6 +8,7 @@ import numpy as np
 import networkx as nx
 import random
 import math
+import os
 from ortools.graph import pywrapgraph
 from utility import setup, optimize, grid_setup, add_party_preference, create_district_map
 
@@ -19,20 +20,34 @@ CARD_STYLE = {
     'box-shadow': '0 4px 6px 0 rgba(0, 0, 0, 0.1)',
     'border-radius': '8px',
     'margin-bottom': '20px',
-    'background-color': 'white',
+    'background-color': '#222831',  # Dark background color
+    'color': 'white',  # White text color
 }
 
 SLIDER_STYLE = {
     'margin-bottom': '20px',
+    'color': 'white',  # White text color
 }
 
 GRAPH_STYLE = {
-    'height': '100%',  # Changed to 100% to allow responsive height
-    'width': '100%',   # Added width: 100% for full width
+    'height': '100%',
+    'width': '100%',
+    'background-color': '#2c3e50',  # Dark background color
 }
 
 FONT_STYLE = {
     'font-family': 'Roboto, sans-serif',
+    'color': 'white',  # White text color
+}
+
+HEADLINE_STYLE = {
+    'font-family': 'Roboto, sans-serif',
+    'color': 'black',  # Black text color
+}
+
+CONTAINER_STYLE = {
+    'background-color': '#F3F7EC',  # Match the background color of the boxes
+    'padding': '20px'
 }
 
 def create_slider_with_tooltip(id, label, min_value, max_value, step, value, tooltip):
@@ -57,15 +72,13 @@ def create_slider_with_tooltip(id, label, min_value, max_value, step, value, too
     ], style=SLIDER_STYLE)
 
 app.layout = dbc.Container([
-    html.H1("District Visualization", className="text-center my-4", style=FONT_STYLE),
+    html.H1("Visualization of Impossibility Theorem For Gerrymandering", className="text-center my-4", style=HEADLINE_STYLE),
     
     dbc.Card([
         dbc.CardBody([
             html.H4("About This Visualization", className="card-title", style=FONT_STYLE),
             html.P(
-                "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam euismod, nisi vel consectetur "
-                "interdum, nisl nunc egestas nunc, vitae tincidunt nisl nunc euismod nunc. Sed euismod, nisi vel "
-                "consectetur interdum, nisl nunc egestas nunc, vitae tincidunt nisl nunc euismod nunc.",
+                "Welcome to our interactive web app designed to shed light on the intricate world of gerrymandering! Gerrymandering, the manipulation of electoral district boundaries for political advantage, has been a hot topic in democratic governance for centuries. Our app brings the power of advanced computational methods and mathematical models right to your fingertips. Dive in to explore how different district configurations can impact election results. Adjust various parameters and constraints, and watch as our simulation tool dynamically updates graphs and calculations, providing a clear and engaging way to understand the effects of gerrymandering. Whether you're a policymaker, political analyst, or just a curious citizen, our app offers valuable insights into the fairness and efficiency of electoral processes.",
                 style=FONT_STYLE
             ),
         ])
@@ -109,7 +122,7 @@ app.layout = dbc.Container([
     ], className="mt-4"),
     
     dcc.Store(id='missed-nodes-store')
-], fluid=True, style=FONT_STYLE)
+], fluid=True, style=CONTAINER_STYLE)
 
 def find_eg(win_count):
     # Implementation of find_eg function (placeholder)
@@ -184,6 +197,9 @@ def update_graphs(grid_size, districts, p_0, c, r, n):
             yaxis=dict(range=[-1, grid_size]),
             height=500,
             margin=dict(l=40, r=40, t=60, b=40),
+            paper_bgcolor='#222831',  # Dark background color
+            plot_bgcolor='#222831',  # Dark background color
+            font=dict(color='white')  # White text color
         )
 
         fig2.update_layout(
@@ -194,6 +210,9 @@ def update_graphs(grid_size, districts, p_0, c, r, n):
             yaxis=dict(range=[-1, grid_size]),
             height=500,
             margin=dict(l=40, r=40, t=60, b=40),
+            paper_bgcolor='#222831',  # Dark background color
+            plot_bgcolor='#222831',  # Dark background color
+            font=dict(color='white')  # White text color
         )
 
         # Calculate metrics
@@ -258,17 +277,21 @@ def update_graphs(grid_size, districts, p_0, c, r, n):
             empty_fig.update_layout(
                 title=dict(text='Error in Visualization', font=dict(size=18)),
                 annotations=[dict(
-                    text=f"An error occurred: {str(e)}",
+                    text="The combination you selected is not valid. Please try again.",
                     showarrow=False,
                     xref="paper",
                     yref="paper",
                     x=0.5,
-                    y=0.5
+                    y=0.5,
+                    font=dict(size=20, color='red')  # Larger bright red text
                 )],
                 height=500,
                 margin=dict(l=40, r=40, t=60, b=40),
+                paper_bgcolor='#2c3e50',  # Dark background color
+                plot_bgcolor='#2c3e50',  # Dark background color
             )
-            return empty_fig, empty_fig, f"The combination you selected is not valid. Please try again.", None, html.Div()
-
+            return empty_fig, empty_fig, '', None, html.Div()
+        
 if __name__ == '__main__':
-    app.run_server(debug=True)
+    port = int(os.environ.get('PORT', 5000))
+    app.run_server(debug=True, host='0.0.0.0', port=port)

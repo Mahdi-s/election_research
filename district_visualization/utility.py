@@ -113,7 +113,6 @@ def add_party_preference(grid, n, grid_size, p_0, c, r):
         row_tracker = 0
         square = []
         voter_arr_ind = 0
-        m_val_holder = 0
         vertical_mover = 0
         for i in range(n):
             if i != 0:
@@ -246,8 +245,64 @@ def update_plots(grid_size, districts, p_0, c, r, n):
 
 
 def find_eg(win_count):
+    """
+    Inputs: dictionary of win lose counts for parties within each district
+    Purpose: find efficiency gap of district assignments
+    Output: eg of districts packaged as dictionary
+    """
+    votes_1 = 0
+    votes_0 = 0
+    district_data = win_count
+    wasted_votes = []
+    total_win_a = 0
+    total_win_b = 0
+    total_votes_state = 0
+    imp_flag = 0 #set to 0 means immposiblity has not occured
+    state_votes_a = 0
+    state_votes_b = 0
+    P_a = 0 #state_votes_a/total_votes_state
+    P_b = 0
+    p_a = 0 #total_win_a/state_count
+    p_b = 0
+    state_count = 0
+
+    for key in win_count:
+        state_count += 1
+        votes_1 = win_count[key][1.0]
+        votes_0 = win_count[key][0.0]
+        state_votes_a += votes_0
+        state_votes_b += votes_1
+        totalVotes = votes_1 + votes_0
+        total_votes_state += totalVotes
+        
+        if votes_1 > votes_0:
+            half = math.ceil(totalVotes / 2)
+            wasted_1 = votes_1 - half
+            imp_flag = 1
+            total_win_b += 1
+        else:
+            wasted_1 = votes_1
+
+        if votes_1 < votes_0:
+            half = math.ceil(totalVotes / 2)
+            wasted_0 = votes_0 - half
+            total_win_a += 1
+
+        else:
+            wasted_0 = votes_0
+        
+        wasted_total = wasted_0 - wasted_1
+        
+        wasted_votes.append(wasted_total)
+        if imp_flag == 1:
+            district_data[key]['imp_flag'] = 1
+        else:
+            district_data[key]['imp_flag'] = 0
+
+    sum_wv =sum(wasted_votes)
+    eg = (1/total_votes_state)*sum_wv
     # Implementation of find_eg function (placeholder)
-    return {'eg': random.uniform(-0.1, 0.1)}
+    return {'eg': eg}
 
 def step_five_finder(delta, gamma, dists_num, p_0, n, c, r):
     # Implementation of step_five_finder function
@@ -272,5 +327,24 @@ def refined_step_five_finder(delta, gamma, dists_num, p_0, n, c, r):
     return left_side, right_side
 
 def find_winners(win_count):
-    # Implementation of find_winners function (placeholder)
-    return random.randint(0, 10), random.randint(0, 10)
+    partyOneWin = 0
+    partyZeroWin = 0
+    for iteration in win_count:
+        for districts in win_count[iteration]:
+            for district in districts:
+                for party in districts[district]:
+
+                    if party == 1.0 :
+                        if str(districts[district][party]) == '{}':
+                            partyOneCount = 0
+                        else:
+                            partyOneCount = int(str(districts[district][party]))
+
+                    if party == 0.0:
+                        partyZeroCount = int(str(districts[district][party]))
+
+                if partyOneCount > partyZeroWin:
+                    partyOneCount += 1
+                if partyOneCount < partyZeroWin:
+                    partyZeroCount += 1
+    return partyOneWin, partyZeroWin

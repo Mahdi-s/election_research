@@ -10,7 +10,7 @@ import random
 import math
 import os
 from ortools.graph import pywrapgraph
-from utility import setup, optimize, grid_setup, add_party_preference, create_district_map
+from utility import setup, optimize, grid_setup, create_district_map, find_eg, step_five_finder, refined_step_five_finder, find_winners
 
 app = dash.Dash(__name__, suppress_callback_exceptions=True, external_stylesheets=[dbc.themes.BOOTSTRAP, 'https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap'], title="District Visualization", update_title="Loading...", meta_tags=[{"name": "viewport", "content": "width=device-width, initial-scale=1"}])
 server = app.server
@@ -124,36 +124,6 @@ app.layout = dbc.Container([
     dcc.Store(id='missed-nodes-store')
 ], fluid=True, style=CONTAINER_STYLE)
 
-def find_eg(win_count):
-    # Implementation of find_eg function (placeholder)
-    return {'eg': random.uniform(-0.1, 0.1)}
-
-def step_five_finder(delta, gamma, dists_num, p_0, n, c, r):
-    # Implementation of step_five_finder function
-    proportion_a = 5
-    proportion_b = (c*r) - proportion_a
-    left_side = proportion_b / proportion_a
-    F = math.sqrt((1-delta)/(2*dists_num))
-    numerator = (F**2)-(4*3.14*gamma**(-1)*F*math.sqrt(2)*(1/n))-(8*((3.14)**2)*(gamma**(-1))*(1/n)**2)
-    denominator = (F**2)+(4*3.14*gamma**(-1)*F*math.sqrt(2)*(1/n))+(8*((3.14)**2)*(gamma**(-1))*(1/n)**2)
-    right_side = numerator/denominator
-    return left_side, right_side
-
-def refined_step_five_finder(delta, gamma, dists_num, p_0, n, c, r):
-    # Implementation of refined_step_five_finder function
-    proportion_a = 5
-    proportion_b = (c*r) - proportion_a
-    left_side = proportion_b / proportion_a
-    F = math.sqrt((1-delta)/(2*dists_num))
-    numerator = 2*(1/n)*(math.pi)
-    denominator = (4*gamma)*(math.sqrt((1-delta)/(dists_num+1)))*n
-    right_side = numerator/denominator
-    return left_side, right_side
-
-def find_winners(win_count):
-    # Implementation of find_winners function (placeholder)
-    return random.randint(0, 10), random.randint(0, 10)
-
 @app.callback(
     [Output('district-map', 'figure'),
      Output('district-association-map', 'figure'),
@@ -193,8 +163,8 @@ def update_graphs(grid_size, districts, p_0, c, r, n):
             title=dict(text=f'District Map (Blue: {party_counts["blue"]}, Red: {party_counts["red"]})', font=dict(size=18)),
             xaxis_title=dict(text='X', font=dict(size=14)),
             yaxis_title=dict(text='Y', font=dict(size=14)),
-            xaxis=dict(range=[-1, grid_size]), 
-            yaxis=dict(range=[-1, grid_size]),
+            xaxis=dict(range=[-1, grid_size], gridcolor='rgba(255, 255, 255, 0.1)', gridwidth=0.2),  # Faded grid lines
+            yaxis=dict(range=[-1, grid_size], gridcolor='rgba(255, 255, 255, 0.1)', gridwidth=0.2),  # Faded grid lines
             height=500,
             margin=dict(l=40, r=40, t=60, b=40),
             paper_bgcolor='#222831',  # Dark background color
@@ -206,8 +176,8 @@ def update_graphs(grid_size, districts, p_0, c, r, n):
             title=dict(text='District Association Map', font=dict(size=18)),
             xaxis_title=dict(text='X', font=dict(size=14)),
             yaxis_title=dict(text='Y', font=dict(size=14)),
-            xaxis=dict(range=[-1, grid_size]), 
-            yaxis=dict(range=[-1, grid_size]),
+            xaxis=dict(range=[-1, grid_size], gridcolor='rgba(255, 255, 255, 0.1)', gridwidth=0.2),  # Faded grid lines
+            yaxis=dict(range=[-1, grid_size], gridcolor='rgba(255, 255, 255, 0.1)', gridwidth=0.2),  # Faded grid lines
             height=500,
             margin=dict(l=40, r=40, t=60, b=40),
             paper_bgcolor='#222831',  # Dark background color
@@ -216,10 +186,10 @@ def update_graphs(grid_size, districts, p_0, c, r, n):
         )
 
         # Calculate metrics
-        eg_result = find_eg({'district1': {0.0: 100, 1.0: 80}})  # Placeholder input
+        eg_result = find_eg()  # Placeholder input
         step_five = step_five_finder(0.1, 1, districts, p_0, n, c, r)
         refined_step_five = refined_step_five_finder(0.1, 1, districts, p_0, n, c, r)
-        winners = find_winners({'iteration1': [{'district1': {0.0: 100, 1.0: 80}}]})  # Placeholder input
+        winners = find_winners()  # Placeholder input
 
         # Create calculations table
         calculations_table = dbc.Table([
@@ -293,5 +263,5 @@ def update_graphs(grid_size, districts, p_0, c, r, n):
             return empty_fig, empty_fig, '', None, html.Div()
         
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
-    app.run_server(debug=True, host='0.0.0.0', port=port)
+    port = int(os.environ.get('PORT', 3000))
+    app.run_server(debug=False, host='127.0.0.1', port=port)

@@ -1,11 +1,33 @@
 import dash
 import dash_bootstrap_components as dbc
-from dash import dcc, html
+from dash import dcc, html, Input, Output, State
 from dash.dependencies import Input, Output
 import plotly.graph_objs as go
 import os
 from utility import setup, optimize, find_win_count, grid_setup, create_district_map, find_eg, step_five_finder, refined_step_five_finder, find_winners
 import logging
+from dash.exceptions import PreventUpdate
+from collections import deque
+from time import time
+
+
+
+class SimpleRateLimiter:
+    def __init__(self, max_calls, period):
+        self.max_calls = max_calls
+        self.period = period
+        self.calls = deque()
+
+    def __call__(self):
+        now = time()
+        while self.calls and now - self.calls[0] >= self.period:
+            self.calls.popleft()
+        if len(self.calls) >= self.max_calls:
+            return False
+        self.calls.append(now)
+        return True
+rate_limiter = SimpleRateLimiter(max_calls=5, period=60)  # 10 calls per minute
+
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -13,6 +35,8 @@ logger = logging.getLogger(__name__)
 
 app = dash.Dash(__name__, suppress_callback_exceptions=False, external_stylesheets=[dbc.themes.BOOTSTRAP, 'https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap'], title="District Visualization", update_title="Loading...", meta_tags=[{"name": "viewport", "content": "width=device-width, initial-scale=1"}])
 server = app.server
+
+
 
 # Define styles
 CARD_STYLE = {
@@ -84,6 +108,14 @@ def create_slider_with_tooltip(id, label, min_value, max_value, step, value, too
 
 app.layout = dbc.Container([
     html.H1("Visualization of Impossibility Theorem For Gerrymandering", className="text-center my-4", style=HEADLINE_STYLE),
+
+    dbc.Modal([
+        dbc.ModalHeader("Rate Limit Exceeded"),
+        dbc.ModalBody("You've reached the rate limit. Please wait a moment before trying again."),
+        dbc.ModalFooter(
+            dbc.Button("Close", id="close-rate-limit-modal", className="ml-auto")
+        ),
+    ], id="rate-limit-modal", is_open=False),
     
     dbc.Card([
         dbc.CardBody([
@@ -152,28 +184,44 @@ app.layout = dbc.Container([
     dcc.Store(id='missed-nodes-store')
 ], fluid=True, style=CONTAINER_STYLE)
 
-print("Layout has been defined")
 
 @app.callback(
     [Output('district-map', 'figure'),
      Output('district-association-map', 'figure'),
      Output('warning-message', 'children'),
      Output('missed-nodes-store', 'data'),
-     Output('calculations-table', 'children')] +
+     Output('calculations-table', 'children'),
+     Output('rate-limit-modal', 'is_open')] +
     [Output(f'{param}-slider', 'value') for param in ['districts', 'p0', 'c', 'r', 'n', 'delta', 'gamma']] +
     [Output(f'{param}-input', 'value') for param in ['districts', 'p0', 'c', 'r', 'n', 'delta', 'gamma']],
     [Input(f'{param}-slider', 'value') for param in ['districts', 'p0', 'c', 'r', 'n', 'delta', 'gamma']] +
-    [Input(f'{param}-input', 'value') for param in ['districts', 'p0', 'c', 'r', 'n', 'delta', 'gamma']],
+    [Input(f'{param}-input', 'value') for param in ['districts', 'p0', 'c', 'r', 'n', 'delta', 'gamma']] +
+    [Input("close-rate-limit-modal", "n_clicks")],
+    [State("rate-limit-modal", "is_open")],
     prevent_initial_call='initial_duplicate'
 )
 def update_graphs(*args):
 
     print('in update graph')
     logger.debug(f"Callback triggered with args: {args}")
+
+
     ctx = dash.callback_context
     if not ctx.triggered:
         return dash.no_update
+    
 
+    if not rate_limiter():
+        return (
+            dash.no_update,  # district-map
+            dash.no_update,  # district-association-map
+            "Rate limit exceeded. Please wait before trying again.",  # warning-message
+            dash.no_update,  # missed-nodes-store
+            dash.no_update,  # calculations-table
+            True,  # rate-limit-modal is_open (set to True to open the modal)
+            *[dash.no_update for _ in range(14)]  # No updates to sliders and inputs
+        )
+    
     input_id = ctx.triggered[0]['prop_id'].split('.')[0]
     param, input_type = input_id.rsplit('-', 1)
     value = ctx.triggered[0]['value']
@@ -185,7 +233,7 @@ def update_graphs(*args):
     # Extract values for the main function
     districts, p_0, c, r, n, delta, gamma = [values[p] for p in ['districts', 'p0', 'c', 'r', 'n', 'delta', 'gamma']]
 
-    try:          
+    try:     
         grid_size = n * c  # Calculate grid size based on n and c
         logger.debug(f"Updating graphs with parameters: grid_size={grid_size}, districts={districts}, p_0={p_0}, c={c}, r={r}, n={n}")
 
@@ -268,32 +316,47 @@ def update_graphs(*args):
         logger.debug("Graphs and calculations completed successfully")
 
         return (
-            fig1, fig2, '', None, calculations_table,
+            fig1, fig2, '', None, calculations_table, False,
+            *[values[p] for p in ['districts', 'p0', 'c', 'r', 'n', 'delta', 'gamma']],
+            *[values[p] for p in ['districts', 'p0', 'c', 'r', 'n', 'delta', 'gamma']]
+        )
+        
+    except RateLimitExceeded:
+        logger.warning("Rate limit exceeded")
+        return (
+            dash.no_update,  # district-map
+            dash.no_update,  # district-association-map
+            "Rate limit exceeded. Please wait before trying again.",  # warning-message
+            dash.no_update,  # missed-nodes-store
+            dash.no_update,  # calculations-table
+            True,  # rate-limit-modal is_open (set to True to open the modal)
             *[values[p] for p in ['districts', 'p0', 'c', 'r', 'n', 'delta', 'gamma']],
             *[values[p] for p in ['districts', 'p0', 'c', 'r', 'n', 'delta', 'gamma']]
         )
 
+
     except Exception as e:
-        print(e)
+        empty_fig = go.Figure()
+        empty_fig.update_layout(
+            title=dict(text='Error in Visualization', font=dict(size=18)),
+            annotations=[dict(
+                text="The combination you selected is not valid. Please try again.",
+                showarrow=False,
+                xref="paper",
+                yref="paper",
+                x=0.5,
+                y=0.5,
+                font=dict(size=20, color='red')
+            )],
+            height=500,
+            margin=dict(l=40, r=40, t=60, b=40),
+            paper_bgcolor='#222831',
+            plot_bgcolor='#222831',
+        )
+        
         if 'missed_nodes' in str(e):
             missed_nodes = eval(str(e).split('=')[1].strip())
             warning = f"Warning: {len(missed_nodes)} nodes were missed in the grid setup. This may affect the accuracy of the visualization."
-            
-            empty_fig = go.Figure()
-            empty_fig.update_layout(
-                title=dict(text='Error in Visualization', font=dict(size=18)),
-                annotations=[dict(
-                    text=warning,
-                    showarrow=False,
-                    xref="paper",
-                    yref="paper",
-                    x=0.5,
-                    y=0.5
-                )],
-                height=500,
-                margin=dict(l=40, r=40, t=60, b=40),
-            )
-            
             empty_fig.add_trace(go.Scatter(
                 x=[node[0] for node in missed_nodes],
                 y=[node[1] for node in missed_nodes],
@@ -308,27 +371,13 @@ def update_graphs(*args):
                 ),
                 name='Missed Nodes'
             ))
-            
-            return empty_fig, empty_fig, warning, missed_nodes, html.Div()
+            return (empty_fig, empty_fig, warning, missed_nodes, html.Div(), False,
+                    *[dash.no_update for _ in range(14)])
         else:
-            empty_fig = go.Figure()
-            empty_fig.update_layout(
-                title=dict(text='Error in Visualization', font=dict(size=18)),
-                annotations=[dict(
-                    text="The combination you selected is not valid. Please try again.",
-                    showarrow=False,
-                    xref="paper",
-                    yref="paper",
-                    x=0.5,
-                    y=0.5,
-                    font=dict(size=20, color='red')  # Larger bright red text
-                )],
-                height=500,
-                margin=dict(l=40, r=40, t=60, b=40),
-                paper_bgcolor='#222831',  # Dark background color
-                plot_bgcolor='#222831',  # Dark background color
-            )
-            return empty_fig, empty_fig, '', None, html.Div()
+            return (empty_fig, empty_fig, str(e), None, html.Div(), False,
+                    *[dash.no_update for _ in range(14)])
+
+
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))

@@ -177,74 +177,6 @@ def create_district_map(grid, block_assignments):
 
     return x_coords, y_coords, colors, district_colors, party_counts
 
-# def update_plots(grid_size, districts, p_0, c, r, n):
-#     print(f"update_plots called with: grid_size={grid_size}, districts={districts}, p_0={p_0}, c={c}, r={r}, n={n}")
-#     global current_grid, current_block_assignments, current_districts
-
-#     start_time = time.time()
-
-#     # Check if we need to recalculate the grid and districts
-#     recalculate = (current_grid is None or 
-#                    current_grid.number_of_nodes() != grid_size * grid_size or
-#                    current_districts != districts)
-
-#     if recalculate:
-#         grid_size, district_centers, pops, grid = grid_setup(grid_size, districts, n, p_0, c, r)
-#         start_nodes, end_nodes, capacities, costs, supplies, source, sink, pops = setup(districts, grid_size, district_centers, pops)
-#         block_assignments = optimize(start_nodes, end_nodes, capacities, costs, supplies, source, sink, grid, grid_size)
-        
-#         current_grid = grid
-#         current_block_assignments = block_assignments
-#         current_districts = districts
-#     else:
-#         # If grid size and districts haven't changed, just update voter preferences
-#         add_party_preference(current_grid, n, grid_size, p_0, c, r)
-
-#     x_coords, y_coords, colors, district_colors, party_counts = create_district_map(current_grid, current_block_assignments)
-
-#     # Update fig_widget
-#     fig_widget.data = []
-#     fig_widget.add_trace(go.Scatter(
-#         x=x_coords, 
-#         y=y_coords, 
-#         mode='markers', 
-#         marker=dict(color=colors, size=10),
-#         text=[f'District {current_grid.nodes[node]["district"]}' for node in current_grid.nodes()],
-#         hoverinfo='text'
-#     ))
-
-#     # Update fig_widget
-#     fig_widget.data = []
-#     fig_widget.add_trace(go.Scatter(
-#         x=x_coords, y=y_coords, mode='markers', 
-#         marker=dict(color=colors, size=10),
-#         text=[f'District {current_grid.nodes[node]["district"]}' for node in current_grid.nodes()],
-#         hoverinfo='text'
-#     ))
-
-#     # Update fig_widget2
-#     fig_widget2.data = []
-#     fig_widget2.add_trace(go.Scatter(
-#         x=x_coords, y=y_coords, mode='markers', 
-#         marker=dict(color=district_colors, size=10),
-#         text=[f'District {current_grid.nodes[node]["district"]}' for node in current_grid.nodes()],
-#         hoverinfo='text'
-#     ))
-
-#     fig_widget.update_layout(
-#         title=f'District Map (Blue: {party_counts["blue"]}, Red: {party_counts["red"]})',
-#         xaxis_title='X', yaxis_title='Y',
-#         xaxis=dict(range=[-1, grid_size]), yaxis=dict(range=[-1, grid_size])
-#     )
-
-#     fig_widget2.update_layout(
-#         title='District Association Map',
-#         xaxis_title='X', yaxis_title='Y',
-#         xaxis=dict(range=[-1, grid_size]), yaxis=dict(range=[-1, grid_size])
-#     )
-
-#     end_time = time.time()
-#     print(f"Update time: {end_time - start_time:.2f} seconds")
 
 
 def find_win_count(grid, dist_num):
@@ -331,7 +263,7 @@ def find_eg(win_count):
 
 def step_five_finder(delta, gamma, dists_num, p_0, n, c, r):
     # Implementation of step_five_finder function
-    proportion_a = 5
+    proportion_a = math.floor((c * r) * p_0)
     proportion_b = (c*r) - proportion_a
     left_side = proportion_b / proportion_a
     F = math.sqrt((1-delta)/(2*dists_num))
@@ -342,7 +274,7 @@ def step_five_finder(delta, gamma, dists_num, p_0, n, c, r):
 
 def refined_step_five_finder(delta, gamma, dists_num, p_0, n, c, r):
     # Implementation of refined_step_five_finder function
-    proportion_a = 5
+    proportion_a = math.floor((c * r) * p_0)
     proportion_b = (c*r) - proportion_a
     left_side = proportion_b / proportion_a
     F = math.sqrt((1-delta)/(2*dists_num))

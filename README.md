@@ -1,5 +1,7 @@
 # 🗺️ Gerrymandering Impossibility Theorem Simulation
 
+
+
 ## 📚 About This Repository
 
 This repository contains a comprehensive simulation and analysis toolkit for exploring the Impossibility Theorem for Gerrymandering, as described in the work of Alexeev and Mixon. Our project aims to provide a deeper understanding of the complexities involved in creating fair districting systems and the challenges in detecting and preventing gerrymandering.
@@ -21,6 +23,7 @@ This repository contains a comprehensive simulation and analysis toolkit for exp
 
 - **district_visualization**: Folder containing a Python app that provides an interactive version of the simulation.
 - **interactivebook.ipynb**: Jupyter notebook version of the district visualization web app.
+- **[Live Demo](https://gerrymandering-989f636aaf2b.herokuapp.com/)**: Try out our interactive visualization app! 
 
 ### 📄 Documentation
 
@@ -49,13 +52,9 @@ The core challenge we address is the development of objective, quantifiable meas
 
 We welcome contributions! Please see our contributing guidelines for more information.
 
-## 📜 License
-
-(Include license information here)
-
 ## 📞 Contact
 
-(Add contact information or links to project maintainers)
+mahdisaeediv@gmail.com
 
 ---
 

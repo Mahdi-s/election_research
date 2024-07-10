@@ -38,13 +38,15 @@ def setup(districts, grid_size, district_centers, pops):
         supplies = [int(total_pop)] + ((grid_size * grid_size) + districts) * [0] + [-int(total_pop)]
         source = 0
         sink = districts + (grid_size * grid_size) + 1
-        return start_nodes, end_nodes, capacities, costs, supplies, source, sink, pops, total_pop
+        print("done with setup")
+        return start_nodes, end_nodes, capacities, costs, supplies, source, sink, pops
     except Exception as e:
         print(f"Error in setup function: {e}")
         raise
 
 def optimize(start_nodes, end_nodes, capacities, costs, supplies, source, sink, grid, grid_size):
     try:
+        print("starting optimize")
         Block_Assignments = pa.DataFrame(columns=['DIST_NO', 'ASSIGN_POP', 'ACTUAL_POP'])
         min_cost_flow = pywrapgraph.SimpleMinCostFlow()
         for i in range(len(start_nodes)):
@@ -75,6 +77,7 @@ def optimize(start_nodes, end_nodes, capacities, costs, supplies, source, sink, 
                                     flag = 0
         else:
             print('There was an issue with the min cost flow input.')
+        print("done with optimize")
         return Block_Assignments
     except Exception as e:
         print(f"Error in optimize function: {e}")
@@ -99,7 +102,7 @@ def grid_setup(grid_s, dist, n, p_0, c, r):
         for node in grid.nodes():
             grid.nodes[node]["population"] = pops[node[0]][node[1]]
         add_party_preference(grid, n, grid_size, p_0, c, r)
-        return districts, grid_size, district_centers, pops, grid
+        return grid_size, district_centers, pops, grid
     except Exception as e:
         print(f"Error in grid_setup function: {e}")
         raise
@@ -174,75 +177,94 @@ def create_district_map(grid, block_assignments):
 
     return x_coords, y_coords, colors, district_colors, party_counts
 
-def update_plots(grid_size, districts, p_0, c, r, n):
-    global current_grid, current_block_assignments, current_districts
+# def update_plots(grid_size, districts, p_0, c, r, n):
+#     print(f"update_plots called with: grid_size={grid_size}, districts={districts}, p_0={p_0}, c={c}, r={r}, n={n}")
+#     global current_grid, current_block_assignments, current_districts
 
-    start_time = time.time()
+#     start_time = time.time()
 
-    # Check if we need to recalculate the grid and districts
-    recalculate = (current_grid is None or 
-                   current_grid.number_of_nodes() != grid_size * grid_size or
-                   current_districts != districts)
+#     # Check if we need to recalculate the grid and districts
+#     recalculate = (current_grid is None or 
+#                    current_grid.number_of_nodes() != grid_size * grid_size or
+#                    current_districts != districts)
 
-    if recalculate:
-        districts, grid_size, district_centers, pops, grid = grid_setup(grid_size, districts, n, p_0, c, r)
-        start_nodes, end_nodes, capacities, costs, supplies, source, sink, pops, total_pop = setup(districts, grid_size, district_centers, pops)
-        block_assignments = optimize(start_nodes, end_nodes, capacities, costs, supplies, source, sink, grid, grid_size)
+#     if recalculate:
+#         grid_size, district_centers, pops, grid = grid_setup(grid_size, districts, n, p_0, c, r)
+#         start_nodes, end_nodes, capacities, costs, supplies, source, sink, pops = setup(districts, grid_size, district_centers, pops)
+#         block_assignments = optimize(start_nodes, end_nodes, capacities, costs, supplies, source, sink, grid, grid_size)
         
-        current_grid = grid
-        current_block_assignments = block_assignments
-        current_districts = districts
-    else:
-        # If grid size and districts haven't changed, just update voter preferences
-        add_party_preference(current_grid, n, grid_size, p_0, c, r)
+#         current_grid = grid
+#         current_block_assignments = block_assignments
+#         current_districts = districts
+#     else:
+#         # If grid size and districts haven't changed, just update voter preferences
+#         add_party_preference(current_grid, n, grid_size, p_0, c, r)
 
-    x_coords, y_coords, colors, district_colors, party_counts = create_district_map(current_grid, current_block_assignments)
+#     x_coords, y_coords, colors, district_colors, party_counts = create_district_map(current_grid, current_block_assignments)
 
-    # Update fig_widget
-    fig_widget.data = []
-    fig_widget.add_trace(go.Scatter(
-        x=x_coords, 
-        y=y_coords, 
-        mode='markers', 
-        marker=dict(color=colors, size=10),
-        text=[f'District {current_grid.nodes[node]["district"]}' for node in current_grid.nodes()],
-        hoverinfo='text'
-    ))
+#     # Update fig_widget
+#     fig_widget.data = []
+#     fig_widget.add_trace(go.Scatter(
+#         x=x_coords, 
+#         y=y_coords, 
+#         mode='markers', 
+#         marker=dict(color=colors, size=10),
+#         text=[f'District {current_grid.nodes[node]["district"]}' for node in current_grid.nodes()],
+#         hoverinfo='text'
+#     ))
 
-    # Update fig_widget
-    fig_widget.data = []
-    fig_widget.add_trace(go.Scatter(
-        x=x_coords, y=y_coords, mode='markers', 
-        marker=dict(color=colors, size=10),
-        text=[f'District {current_grid.nodes[node]["district"]}' for node in current_grid.nodes()],
-        hoverinfo='text'
-    ))
+#     # Update fig_widget
+#     fig_widget.data = []
+#     fig_widget.add_trace(go.Scatter(
+#         x=x_coords, y=y_coords, mode='markers', 
+#         marker=dict(color=colors, size=10),
+#         text=[f'District {current_grid.nodes[node]["district"]}' for node in current_grid.nodes()],
+#         hoverinfo='text'
+#     ))
 
-    # Update fig_widget2
-    fig_widget2.data = []
-    fig_widget2.add_trace(go.Scatter(
-        x=x_coords, y=y_coords, mode='markers', 
-        marker=dict(color=district_colors, size=10),
-        text=[f'District {current_grid.nodes[node]["district"]}' for node in current_grid.nodes()],
-        hoverinfo='text'
-    ))
+#     # Update fig_widget2
+#     fig_widget2.data = []
+#     fig_widget2.add_trace(go.Scatter(
+#         x=x_coords, y=y_coords, mode='markers', 
+#         marker=dict(color=district_colors, size=10),
+#         text=[f'District {current_grid.nodes[node]["district"]}' for node in current_grid.nodes()],
+#         hoverinfo='text'
+#     ))
 
-    fig_widget.update_layout(
-        title=f'District Map (Blue: {party_counts["blue"]}, Red: {party_counts["red"]})',
-        xaxis_title='X', yaxis_title='Y',
-        xaxis=dict(range=[-1, grid_size]), yaxis=dict(range=[-1, grid_size])
-    )
+#     fig_widget.update_layout(
+#         title=f'District Map (Blue: {party_counts["blue"]}, Red: {party_counts["red"]})',
+#         xaxis_title='X', yaxis_title='Y',
+#         xaxis=dict(range=[-1, grid_size]), yaxis=dict(range=[-1, grid_size])
+#     )
 
-    fig_widget2.update_layout(
-        title='District Association Map',
-        xaxis_title='X', yaxis_title='Y',
-        xaxis=dict(range=[-1, grid_size]), yaxis=dict(range=[-1, grid_size])
-    )
+#     fig_widget2.update_layout(
+#         title='District Association Map',
+#         xaxis_title='X', yaxis_title='Y',
+#         xaxis=dict(range=[-1, grid_size]), yaxis=dict(range=[-1, grid_size])
+#     )
 
-    end_time = time.time()
-    print(f"Update time: {end_time - start_time:.2f} seconds")
+#     end_time = time.time()
+#     print(f"Update time: {end_time - start_time:.2f} seconds")
 
 
+def find_win_count(grid, dist_num):
+    win_count = {}
+
+    # Initialize the win_count dictionary
+    for node in grid.nodes():
+        district_id = grid.nodes[node]['district']
+        if district_id not in win_count:
+            win_count[district_id] = {0.0: 0, 1.0: 0}
+        if len(win_count) == dist_num:
+            break
+
+    # Count votes for each district
+    for node in grid.nodes():
+        district_id = grid.nodes[node]['district']
+        voter_pref = float(grid.nodes[node]["voter_pref"])  # Convert to float
+        win_count[district_id][voter_pref] += 1
+
+    return win_count
 
 def find_eg(win_count):
     """
@@ -250,6 +272,9 @@ def find_eg(win_count):
     Purpose: find efficiency gap of district assignments
     Output: eg of districts packaged as dictionary
     """
+
+
+
     votes_1 = 0
     votes_0 = 0
     district_data = win_count
@@ -327,24 +352,17 @@ def refined_step_five_finder(delta, gamma, dists_num, p_0, n, c, r):
     return left_side, right_side
 
 def find_winners(win_count):
-    partyOneWin = 0
-    partyZeroWin = 0
-    for iteration in win_count:
-        for districts in win_count[iteration]:
-            for district in districts:
-                for party in districts[district]:
-
-                    if party == 1.0 :
-                        if str(districts[district][party]) == '{}':
-                            partyOneCount = 0
-                        else:
-                            partyOneCount = int(str(districts[district][party]))
-
-                    if party == 0.0:
-                        partyZeroCount = int(str(districts[district][party]))
-
-                if partyOneCount > partyZeroWin:
-                    partyOneCount += 1
-                if partyOneCount < partyZeroWin:
-                    partyZeroCount += 1
-    return partyOneWin, partyZeroWin
+    party_one_win = 0
+    party_zero_win = 0
+    
+    for district, votes in win_count.items():
+        party_zero_count = votes[0.0]
+        party_one_count = votes[1.0]
+        
+        if party_one_count > party_zero_count:
+            party_one_win += 1
+        elif party_zero_count > party_one_count:
+            party_zero_win += 1
+        # If counts are equal, we don't increment either win count
+    
+    return party_one_win, party_zero_win

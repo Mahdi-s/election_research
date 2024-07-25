@@ -50,7 +50,7 @@ The core challenge we address is the development of objective, quantifiable meas
 
 ## 🤝 Contributing
 
-We welcome contributions! Please see our contributing guidelines for more information.
+We welcome contributions! 
 
 ## 📞 Contact
 

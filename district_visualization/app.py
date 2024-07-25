@@ -26,7 +26,7 @@ class SimpleRateLimiter:
             return False
         self.calls.append(now)
         return True
-rate_limiter = SimpleRateLimiter(max_calls=5, period=60)  # 10 calls per minute
+rate_limiter = SimpleRateLimiter(max_calls=30, period=60)  
 
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
